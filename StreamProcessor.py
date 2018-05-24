@@ -1,9 +1,9 @@
 ###############################################################
 ###############################################################
-##		This program set up a Rekognition Stream Processor.	 ##
-##		This Processor pulls streaming data from Kinesis 	 ##
-##		Video Stream. After streaming data is processed, 	 ##
-##		the result is sent to Kinesis Data Stream.			 ##
+##		This program set up a Rekognition Stream Processor.  ##
+##		This Processor pulls streaming data from Kinesis     ##
+##		Video Stream. After streaming data is processed,     ##
+##		the result is sent to Kinesis Data Stream.           ##
 ###############################################################
 ###############################################################
 

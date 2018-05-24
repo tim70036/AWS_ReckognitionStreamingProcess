@@ -1,8 +1,8 @@
 ###############################################################
 ###############################################################
-##		This program pulls data from Kinesis Data Stream.	 ##
+##		This program pulls data from Kinesis Data Stream.    ##
 ##		You should modify Extract() to customize the outputs ##
-##		that are extracted from data stream.				 ##
+##		that are extracted from data stream.                 ##
 ###############################################################
 ###############################################################
 
@@ -42,7 +42,7 @@ def ExtractData(response):
 
 	# Empty?
 	if not recordArr:
-		print('This is an Empty Record.')
+		print('\nThis is an Empty Record.\n')
 		return
 
 	# Iterate each record
@@ -50,18 +50,20 @@ def ExtractData(response):
 
 		# Data record time
 		time = obj["ApproximateArrivalTimestamp"]
-		print("Record Time :" + time.strftime("%Y-%m-%d %H:%M:%S"))
+		print("\nRecord Time :" + time.strftime("%Y-%m-%d %H:%M:%S"))
 
 		# Decode binary data to JSON string , and then to dict
 		data = obj["Data"].decode()
 		data = json.loads(data)
 
 		# Output certrain field
-		print("FaceSearchResponse :")
+		print("\nFaceSearchResponse :")
 		if "FaceSearchResponse" in data:
 			pprint.pprint(data["FaceSearchResponse"], indent=1)
+
+			print('\nDetected People : ' + str(len(data["FaceSearchResponse"])) + '\n')
 		else:
-			pprint.pprint("FaceSearchResponse does not exist in this record", indent=1)
+			print("\nFaceSearchResponse does not exist in this record")
 
 ##########################################################
 ##########################################################
