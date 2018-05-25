@@ -23,6 +23,9 @@ from var import *
 		# streamProcessorName
 		# IAMRoleArn -> rekognition role for processor
 		
+
+from pinpoint import SendDrunkMessage
+
 client = boto3.client('kinesis', region_name=AWS_REGION)
 
 ##########################################################
@@ -36,7 +39,14 @@ def main():
 	ConsumeStream(shardIter)
 ##########################################################
 ##########################################################
+lastTime = None
 def ExtractData(response):
+
+	global lastTime
+	global prevFace
+	global bigCnt
+	global noDetectCnt
+
 	# Customize processing data
 	recordArr = response["Records"]
 
@@ -51,6 +61,8 @@ def ExtractData(response):
 		# Data record time
 		time = obj["ApproximateArrivalTimestamp"]
 		print("\nRecord Time :" + time.strftime("%Y-%m-%d %H:%M:%S"))
+		
+
 
 		# Decode binary data to JSON string , and then to dict
 		data = obj["Data"].decode()
@@ -62,8 +74,71 @@ def ExtractData(response):
 			pprint.pprint(data["FaceSearchResponse"], indent=1)
 
 			print('\nDetected People : ' + str(len(data["FaceSearchResponse"])) + '\n')
+
+			FaceMovement(data["FaceSearchResponse"])
+
 		else:
 			print("\nFaceSearchResponse does not exist in this record")
+
+		# Check every 20 sec
+		if not lastTime:
+			lastTime = time
+		elif ((time-lastTime).total_seconds() > 15):
+			print('\nReach time check interval ' + str((time-lastTime).total_seconds()) + ' sec.')
+			print('Big Movement Count : ' + str(bigCnt))
+			print('No Detect Count    : ' + str(noDetectCnt) + '\n')
+
+			if bigCnt > 8 or noDetectCnt > 6:
+				print('\nYOUUUUUU AREEEEE FUCKINGGGG DRUNKKKK!!!!!\n')
+				print('YOUUUUUU AREEEEE FUCKINGGGG DRUNKKKK!!!!!\n')
+				print('YOUUUUUU AREEEEE FUCKINGGGG DRUNKKKK!!!!!\n')
+				SendDrunkMessage()
+			
+			bigCnt = 0
+			noDetectCnt = 0
+			lastTime = time
+			
+
+
+##########################################################
+##########################################################
+prevFace = []
+bigCnt = 0
+noDetectCnt = 0
+def FaceMovement(data):
+
+	global prevFace
+	global bigCnt
+	global noDetectCnt
+
+	if data and "DetectedFace" in data[0]:
+		if not prevFace:
+			prevFace = data[0]["DetectedFace"]['Landmarks']
+			print('\nThis is the first face.\n')
+			return
+
+		print("\nXY Movement: ")
+		curFace = data[0]["DetectedFace"]['Landmarks']
+		itemName = ["eyeLeft", "eyeRight", "Nose"]
+		deltaX = []
+		deltaY = []
+		for i in range(0,len(itemName)):
+			deltaX.append(curFace[i]['X'] - prevFace[i]['X'])
+			deltaY.append(curFace[i]['Y'] - prevFace[i]['Y'])
+			print(itemName[i] + " : (" + str(deltaX[i]) + " , " + str(deltaY[i]) + ')')
+
+		drunkThreshold = 0.26
+		if deltaX[0] > drunkThreshold or deltaX[0] < -drunkThreshold:
+			bigCnt = bigCnt + 1
+			print('\nDetect big movement ' + str(bigCnt))
+			print('Detect big movement ' + str(bigCnt))
+			print('Detect big movement ' + str(bigCnt)+ '\n')
+
+		prevFace = curFace		
+
+	else:
+		noDetectCnt = noDetectCnt + 1
+		print('\nNo detectedFace in this record. ' + str(noDetectCnt) + 'times' + '\n')
 
 ##########################################################
 ##########################################################
@@ -77,7 +152,7 @@ def ConsumeStream(shardIter):
 		response = client.get_records(ShardIterator=shardIter, Limit=1)
 		ExtractData(response)
 		print('=====================================')
-		time.sleep(3)
+		time.sleep(1)
 
 		# If there is new data 
 		while 'NextShardIterator' in response:
@@ -85,7 +160,7 @@ def ConsumeStream(shardIter):
 			ExtractData(response)
 			print('=====================================')
 			# wait for 3 seconds
-			time.sleep(3)
+			time.sleep(1)
 ##########################################################
 ##########################################################
 def CheckStream(streamName):
